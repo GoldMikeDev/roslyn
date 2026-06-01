@@ -406,6 +406,7 @@ public partial class CSharpSyntaxVisitor<TResult>
     /// <summary>Called when the visitor visits a DoStatementSyntax node.</summary>
     public virtual TResult? VisitDoStatement(DoStatementSyntax node) => this.DefaultVisit(node);
     public virtual TResult? VisitDoUntilStatement(DoUntilStatementSyntax node) => this.DefaultVisit(node);
+    public virtual TResult? VisitMutateStatement(MutateStatementSyntax node) => this.DefaultVisit(node);
 
     /// <summary>Called when the visitor visits a ForStatementSyntax node.</summary>
     public virtual TResult? VisitForStatement(ForStatementSyntax node) => this.DefaultVisit(node);
@@ -1158,6 +1159,7 @@ public partial class CSharpSyntaxVisitor
     /// <summary>Called when the visitor visits a DoStatementSyntax node.</summary>
     public virtual void VisitDoStatement(DoStatementSyntax node) => this.DefaultVisit(node);
     public virtual void VisitDoUntilStatement(DoUntilStatementSyntax node) => this.DefaultVisit(node);
+    public virtual void VisitMutateStatement(MutateStatementSyntax node) => this.DefaultVisit(node);
 
     /// <summary>Called when the visitor visits a ForStatementSyntax node.</summary>
     public virtual void VisitForStatement(ForStatementSyntax node) => this.DefaultVisit(node);
@@ -1912,6 +1914,10 @@ public partial class CSharpSyntaxRewriter : CSharpSyntaxVisitor<SyntaxNode?>
 
     public override SyntaxNode? VisitDoUntilStatement(DoUntilStatementSyntax node)
         => node.Update(VisitList(node.AttributeLists), VisitToken(node.DoKeyword), (StatementSyntax?)Visit(node.Statement) ?? throw new ArgumentNullException("statement"), VisitToken(node.UntilKeyword), VisitToken(node.OpenParenToken), (ExpressionSyntax?)Visit(node.Condition) ?? throw new ArgumentNullException("condition"), VisitToken(node.CloseParenToken), VisitToken(node.SemicolonToken));
+
+    public override SyntaxNode? VisitMutateStatement(MutateStatementSyntax node)
+        => node.Update(VisitList(node.AttributeLists), VisitToken(node.MutateKeyword), (IdentifierNameSyntax?)Visit(node.VariableName) ?? throw new ArgumentNullException("variableName"), VisitToken(node.ToKeyword), (TypeSyntax?)Visit(node.Type) ?? throw new ArgumentNullException("type"), VisitToken(node.SemicolonToken));
+
 
     public override SyntaxNode? VisitForStatement(ForStatementSyntax node)
         => node.Update(VisitList(node.AttributeLists), VisitToken(node.ForKeyword), VisitToken(node.OpenParenToken), (VariableDeclarationSyntax?)Visit(node.Declaration), VisitList(node.Initializers), VisitToken(node.FirstSemicolonToken), (ExpressionSyntax?)Visit(node.Condition), VisitToken(node.SecondSemicolonToken), VisitList(node.Incrementors), VisitToken(node.CloseParenToken), (StatementSyntax?)Visit(node.Statement) ?? throw new ArgumentNullException("statement"));
@@ -4395,6 +4401,19 @@ public static partial class SyntaxFactory
     public static DoUntilStatementSyntax DoUntilStatement(StatementSyntax statement, ExpressionSyntax condition)
         => SyntaxFactory.DoUntilStatement(default, SyntaxFactory.Token(SyntaxKind.DoKeyword), statement, SyntaxFactory.Token(SyntaxKind.UntilKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), condition, SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
+    /// <summary>Creates a new MutateStatementSyntax instance.</summary>
+    public static MutateStatementSyntax MutateStatement(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken mutateKeyword, IdentifierNameSyntax variableName, SyntaxToken toKeyword, TypeSyntax type, SyntaxToken semicolonToken)
+    {
+        if (mutateKeyword.Kind() != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(mutateKeyword));
+        if (toKeyword.Kind() != SyntaxKind.ToKeyword) throw new ArgumentException(nameof(toKeyword));
+        if (semicolonToken.Kind() != SyntaxKind.SemicolonToken) throw new ArgumentException(nameof(semicolonToken));
+        return (MutateStatementSyntax)Syntax.InternalSyntax.SyntaxFactory.MutateStatement(attributeLists.Node.ToGreenList<Syntax.InternalSyntax.AttributeListSyntax>(), (Syntax.InternalSyntax.SyntaxToken)mutateKeyword.Node!, (Syntax.InternalSyntax.IdentifierNameSyntax)variableName.Green, (Syntax.InternalSyntax.SyntaxToken)toKeyword.Node!, (Syntax.InternalSyntax.TypeSyntax)type.Green, (Syntax.InternalSyntax.SyntaxToken)semicolonToken.Node!).CreateRed();
+    }
+
+    /// <summary>Creates a new MutateStatementSyntax instance.</summary>
+    public static MutateStatementSyntax MutateStatement(IdentifierNameSyntax variableName, TypeSyntax type)
+        => SyntaxFactory.MutateStatement(default, SyntaxFactory.Identifier("mutate"), variableName, SyntaxFactory.Token(SyntaxKind.ToKeyword), type, SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
     /// <summary>Creates a new ForStatementSyntax instance.</summary>
     public static ForStatementSyntax ForStatement(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax? condition, SyntaxToken secondSemicolonToken, SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)
     {
@@ -4407,9 +4426,35 @@ public static partial class SyntaxFactory
         return (ForStatementSyntax)Syntax.InternalSyntax.SyntaxFactory.ForStatement(attributeLists.Node.ToGreenList<Syntax.InternalSyntax.AttributeListSyntax>(), (Syntax.InternalSyntax.SyntaxToken)forKeyword.Node!, (Syntax.InternalSyntax.SyntaxToken)openParenToken.Node!, declaration == null ? null : (Syntax.InternalSyntax.VariableDeclarationSyntax)declaration.Green, initializers.Node.ToGreenSeparatedList<Syntax.InternalSyntax.ExpressionSyntax>(), (Syntax.InternalSyntax.SyntaxToken)firstSemicolonToken.Node!, condition == null ? null : (Syntax.InternalSyntax.ExpressionSyntax)condition.Green, (Syntax.InternalSyntax.SyntaxToken)secondSemicolonToken.Node!, incrementors.Node.ToGreenSeparatedList<Syntax.InternalSyntax.ExpressionSyntax>(), (Syntax.InternalSyntax.SyntaxToken)closeParenToken.Node!, (Syntax.InternalSyntax.StatementSyntax)statement.Green).CreateRed();
     }
 
+    /// <summary>Creates a new MutateStatementSyntax instance.</summary>
+    public static MutateStatementSyntax MutateStatement(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken mutateKeyword, IdentifierNameSyntax variableName, SyntaxToken toKeyword, TypeSyntax type, SyntaxToken semicolonToken)
+    {
+        if (mutateKeyword.Kind() != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(mutateKeyword));
+        if (toKeyword.Kind() != SyntaxKind.ToKeyword) throw new ArgumentException(nameof(toKeyword));
+        if (semicolonToken.Kind() != SyntaxKind.SemicolonToken) throw new ArgumentException(nameof(semicolonToken));
+        return (MutateStatementSyntax)Syntax.InternalSyntax.SyntaxFactory.MutateStatement(attributeLists.Node.ToGreenList<Syntax.InternalSyntax.AttributeListSyntax>(), (Syntax.InternalSyntax.SyntaxToken)mutateKeyword.Node!, (Syntax.InternalSyntax.IdentifierNameSyntax)variableName.Green, (Syntax.InternalSyntax.SyntaxToken)toKeyword.Node!, (Syntax.InternalSyntax.TypeSyntax)type.Green, (Syntax.InternalSyntax.SyntaxToken)semicolonToken.Node!).CreateRed();
+    }
+
+    /// <summary>Creates a new MutateStatementSyntax instance.</summary>
+    public static MutateStatementSyntax MutateStatement(IdentifierNameSyntax variableName, TypeSyntax type)
+        => SyntaxFactory.MutateStatement(default, SyntaxFactory.Identifier("mutate"), variableName, SyntaxFactory.Token(SyntaxKind.ToKeyword), type, SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
     /// <summary>Creates a new ForStatementSyntax instance.</summary>
     public static ForStatementSyntax ForStatement(SyntaxList<AttributeListSyntax> attributeLists, VariableDeclarationSyntax? declaration, SeparatedSyntaxList<ExpressionSyntax> initializers, ExpressionSyntax? condition, SeparatedSyntaxList<ExpressionSyntax> incrementors, StatementSyntax statement)
         => SyntaxFactory.ForStatement(attributeLists, SyntaxFactory.Token(SyntaxKind.ForKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), declaration, initializers, SyntaxFactory.Token(SyntaxKind.SemicolonToken), condition, SyntaxFactory.Token(SyntaxKind.SemicolonToken), incrementors, SyntaxFactory.Token(SyntaxKind.CloseParenToken), statement);
+
+    /// <summary>Creates a new MutateStatementSyntax instance.</summary>
+    public static MutateStatementSyntax MutateStatement(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken mutateKeyword, IdentifierNameSyntax variableName, SyntaxToken toKeyword, TypeSyntax type, SyntaxToken semicolonToken)
+    {
+        if (mutateKeyword.Kind() != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(mutateKeyword));
+        if (toKeyword.Kind() != SyntaxKind.ToKeyword) throw new ArgumentException(nameof(toKeyword));
+        if (semicolonToken.Kind() != SyntaxKind.SemicolonToken) throw new ArgumentException(nameof(semicolonToken));
+        return (MutateStatementSyntax)Syntax.InternalSyntax.SyntaxFactory.MutateStatement(attributeLists.Node.ToGreenList<Syntax.InternalSyntax.AttributeListSyntax>(), (Syntax.InternalSyntax.SyntaxToken)mutateKeyword.Node!, (Syntax.InternalSyntax.IdentifierNameSyntax)variableName.Green, (Syntax.InternalSyntax.SyntaxToken)toKeyword.Node!, (Syntax.InternalSyntax.TypeSyntax)type.Green, (Syntax.InternalSyntax.SyntaxToken)semicolonToken.Node!).CreateRed();
+    }
+
+    /// <summary>Creates a new MutateStatementSyntax instance.</summary>
+    public static MutateStatementSyntax MutateStatement(IdentifierNameSyntax variableName, TypeSyntax type)
+        => SyntaxFactory.MutateStatement(default, SyntaxFactory.Identifier("mutate"), variableName, SyntaxFactory.Token(SyntaxKind.ToKeyword), type, SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
     /// <summary>Creates a new ForStatementSyntax instance.</summary>
     public static ForStatementSyntax ForStatement(StatementSyntax statement)

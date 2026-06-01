@@ -74,3 +74,24 @@ static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.InlineExpressionDeclaration(M
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitInlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax! node) -> void
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitInlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax! node) -> TResult?
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitInlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax! node) -> TResult?
+Microsoft.CodeAnalysis.CSharp.SyntaxKind.MutateStatement = 9086 -> Microsoft.CodeAnalysis.CSharp.SyntaxKind
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.MutateKeyword.get -> Microsoft.CodeAnalysis.SyntaxToken
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.VariableName.get -> Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.ToKeyword.get -> Microsoft.CodeAnalysis.SyntaxToken
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.Type.get -> Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.SemicolonToken.get -> Microsoft.CodeAnalysis.SyntaxToken
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.Update(Microsoft.CodeAnalysis.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.AttributeListSyntax!> attributeLists, Microsoft.CodeAnalysis.SyntaxToken mutateKeyword, Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax! variableName, Microsoft.CodeAnalysis.SyntaxToken toKeyword, Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax! type, Microsoft.CodeAnalysis.SyntaxToken semicolonToken) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.WithAttributeLists(Microsoft.CodeAnalysis.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.AttributeListSyntax!> attributeLists) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.WithMutateKeyword(Microsoft.CodeAnalysis.SyntaxToken mutateKeyword) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.WithVariableName(Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax! variableName) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.WithToKeyword(Microsoft.CodeAnalysis.SyntaxToken toKeyword) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.WithType(Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax! type) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.WithSemicolonToken(Microsoft.CodeAnalysis.SyntaxToken semicolonToken) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+override Microsoft.CodeAnalysis.CSharp.CSharpSyntaxRewriter.VisitMutateStatement(Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax! node) -> Microsoft.CodeAnalysis.SyntaxNode?
+override Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.Accept(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor! visitor) -> void
+override Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax.Accept<TResult>(Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>! visitor) -> TResult?
+static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.MutateStatement(Microsoft.CodeAnalysis.SyntaxList<Microsoft.CodeAnalysis.CSharp.Syntax.AttributeListSyntax!> attributeLists, Microsoft.CodeAnalysis.SyntaxToken mutateKeyword, Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax! variableName, Microsoft.CodeAnalysis.SyntaxToken toKeyword, Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax! type, Microsoft.CodeAnalysis.SyntaxToken semicolonToken) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.MutateStatement(Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax! variableName, Microsoft.CodeAnalysis.CSharp.Syntax.TypeSyntax! type) -> Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax!
+virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitMutateStatement(Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax! node) -> void
+virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitMutateStatement(Microsoft.CodeAnalysis.CSharp.Syntax.MutateStatementSyntax! node) -> TResult?

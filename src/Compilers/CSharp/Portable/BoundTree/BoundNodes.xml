@@ -1248,6 +1248,12 @@
   <Node Name="BoundWhileStatement" Base="BoundConditionalLoopStatement">
   </Node>
 
+  <Node Name="BoundMutateStatement" Base="BoundStatement">
+    <Field Name="OriginalLocal" Type="LocalSymbol" Null="disallow"/>
+    <Field Name="NewLocal" Type="LocalSymbol" Null="disallow"/>
+    <Field Name="ConversionExpression" Type="BoundExpression" Null="disallow"/>
+  </Node>
+
   <Node Name="BoundForStatement" Base="BoundLoopStatement">
     <!-- OuterLocals are the locals declared within the loop Initializer statement and are in scope throughout the whole loop statement -->
     <Field Name="OuterLocals" Type="ImmutableArray&lt;LocalSymbol&gt;"/>

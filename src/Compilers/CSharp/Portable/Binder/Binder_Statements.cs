@@ -84,6 +84,9 @@ namespace Microsoft.CodeAnalysis.CSharp
                 case SyntaxKind.DoUntilStatement:
                     result = BindDoUntil((DoUntilStatementSyntax)node, diagnostics);
                     break;
+                case SyntaxKind.MutateStatement:
+                    result = BindMutateStatement((MutateStatementSyntax)node, diagnostics);
+                    break;
                 case SyntaxKind.WhileStatement:
                     result = BindWhile((WhileStatementSyntax)node, diagnostics);
                     break;

@@ -125,6 +125,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         DoStatement,
         DoUntilStatement,
         WhileStatement,
+        MutateStatement,
         ForStatement,
         ForEachStatement,
         ForEachDeconstructStep,
@@ -4074,6 +4075,40 @@ namespace Microsoft.CodeAnalysis.CSharp
             if (locals != this.Locals || condition != this.Condition || body != this.Body || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(breakLabel, this.BreakLabel) || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(continueLabel, this.ContinueLabel))
             {
                 var result = new BoundWhileStatement(this.Syntax, locals, condition, body, breakLabel, continueLabel, this.HasErrors);
+                result.CopyAttributes(this);
+                return result;
+            }
+            return this;
+        }
+    }
+
+    internal sealed partial class BoundMutateStatement : BoundStatement
+    {
+        public BoundMutateStatement(SyntaxNode syntax, LocalSymbol originalLocal, LocalSymbol newLocal, BoundExpression conversionExpression, bool hasErrors = false)
+            : base(BoundKind.MutateStatement, syntax, hasErrors || conversionExpression.HasErrors())
+        {
+
+            RoslynDebug.Assert(originalLocal is object, "Field 'originalLocal' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(newLocal is object, "Field 'newLocal' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(conversionExpression is object, "Field 'conversionExpression' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+
+            this.OriginalLocal = originalLocal;
+            this.NewLocal = newLocal;
+            this.ConversionExpression = conversionExpression;
+        }
+
+        public LocalSymbol OriginalLocal { get; }
+        public LocalSymbol NewLocal { get; }
+        public BoundExpression ConversionExpression { get; }
+
+        [DebuggerStepThrough]
+        public override BoundNode? Accept(BoundTreeVisitor visitor) => visitor.VisitMutateStatement(this);
+
+        public BoundMutateStatement Update(LocalSymbol originalLocal, LocalSymbol newLocal, BoundExpression conversionExpression)
+        {
+            if (!Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(originalLocal, this.OriginalLocal) || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(newLocal, this.NewLocal) || conversionExpression != this.ConversionExpression)
+            {
+                var result = new BoundMutateStatement(this.Syntax, originalLocal, newLocal, conversionExpression, this.HasErrors);
                 result.CopyAttributes(this);
                 return result;
             }
@@ -9365,6 +9400,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return VisitDoStatement((BoundDoStatement)node, arg);
                 case BoundKind.DoUntilStatement:
                     return VisitDoUntilStatement((BoundDoUntilStatement)node, arg);
+                case BoundKind.MutateStatement:
+                    return VisitMutateStatement((BoundMutateStatement)node, arg);
                 case BoundKind.WhileStatement:
                     return VisitWhileStatement((BoundWhileStatement)node, arg);
                 case BoundKind.ForStatement:
@@ -9747,6 +9784,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual R VisitIfStatement(BoundIfStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitDoStatement(BoundDoStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitDoUntilStatement(BoundDoUntilStatement node, A arg) => this.DefaultVisit(node, arg);
+        public virtual R VisitMutateStatement(BoundMutateStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitWhileStatement(BoundWhileStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitForStatement(BoundForStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitForEachStatement(BoundForEachStatement node, A arg) => this.DefaultVisit(node, arg);
@@ -9990,6 +10028,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual BoundNode? VisitIfStatement(BoundIfStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitDoStatement(BoundDoStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitDoUntilStatement(BoundDoUntilStatement node) => this.DefaultVisit(node);
+        public virtual BoundNode? VisitMutateStatement(BoundMutateStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitWhileStatement(BoundWhileStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitForStatement(BoundForStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitForEachStatement(BoundForEachStatement node) => this.DefaultVisit(node);
@@ -10522,6 +10561,11 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             this.Visit(node.Condition);
             this.Visit(node.Body);
+            return null;
+        }
+        public override BoundNode? VisitMutateStatement(BoundMutateStatement node)
+        {
+            this.Visit(node.ConversionExpression);
             return null;
         }
         public override BoundNode? VisitWhileStatement(BoundWhileStatement node)
@@ -11841,6 +11885,11 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundExpression condition = (BoundExpression)this.Visit(node.Condition);
             BoundStatement body = (BoundStatement)this.Visit(node.Body);
             return node.Update(locals, condition, body, breakLabel, continueLabel);
+        }
+        public override BoundNode? VisitMutateStatement(BoundMutateStatement node)
+        {
+            BoundExpression conversionExpression = (BoundExpression)this.Visit(node.ConversionExpression);
+            return node.Update(node.OriginalLocal, node.NewLocal, conversionExpression);
         }
         public override BoundNode? VisitWhileStatement(BoundWhileStatement node)
         {
@@ -14007,6 +14056,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundExpression condition = (BoundExpression)this.Visit(node.Condition);
             BoundStatement body = (BoundStatement)this.Visit(node.Body);
             return node.Update(locals, condition, body, node.BreakLabel, node.ContinueLabel);
+        }
+
+        public override BoundNode? VisitMutateStatement(BoundMutateStatement node)
+        {
+            BoundExpression conversionExpression = (BoundExpression)this.Visit(node.ConversionExpression);
+            return node.Update(node.OriginalLocal, node.NewLocal, conversionExpression);
         }
 
         public override BoundNode? VisitWhileStatement(BoundWhileStatement node)
@@ -16500,6 +16555,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             new TreeDumperNode("body", null, new TreeDumperNode[] { Visit(node.Body, null) }),
             new TreeDumperNode("breakLabel", node.BreakLabel, null),
             new TreeDumperNode("continueLabel", node.ContinueLabel, null),
+            new TreeDumperNode("hasErrors", node.HasErrors, null)
+        }
+        );
+        public override TreeDumperNode VisitMutateStatement(BoundMutateStatement node, object? arg) => new TreeDumperNode("mutateStatement", null, new TreeDumperNode[]
+        {
+            new TreeDumperNode("originalLocal", node.OriginalLocal, null),
+            new TreeDumperNode("newLocal", node.NewLocal, null),
+            new TreeDumperNode("conversionExpression", null, new TreeDumperNode[] { Visit(node.ConversionExpression, null) }),
             new TreeDumperNode("hasErrors", node.HasErrors, null)
         }
         );

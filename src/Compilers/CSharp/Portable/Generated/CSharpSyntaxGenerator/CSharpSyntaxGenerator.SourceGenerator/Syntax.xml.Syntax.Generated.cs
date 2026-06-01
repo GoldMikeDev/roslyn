@@ -7732,6 +7732,80 @@ public sealed partial class DoUntilStatementSyntax : StatementSyntax
 /// <remarks>
 /// <para>This node is associated with the following syntax kinds:</para>
 /// <list type="bullet">
+/// <item><description><see cref="SyntaxKind.MutateStatement"/></description></item>
+/// </list>
+/// </remarks>
+public sealed partial class MutateStatementSyntax : StatementSyntax
+{
+    private SyntaxNode? attributeLists;
+    private IdentifierNameSyntax? variableName;
+    private TypeSyntax? type;
+
+    internal MutateStatementSyntax(InternalSyntax.CSharpSyntaxNode green, SyntaxNode? parent, int position)
+      : base(green, parent, position)
+    {
+    }
+
+    public override SyntaxList<AttributeListSyntax> AttributeLists => new SyntaxList<AttributeListSyntax>(GetRed(ref this.attributeLists, 0));
+
+    public SyntaxToken MutateKeyword => new SyntaxToken(this, ((InternalSyntax.MutateStatementSyntax)this.Green).mutateKeyword, GetChildPosition(1), GetChildIndex(1));
+
+    public IdentifierNameSyntax VariableName => GetRed(ref this.variableName, 2)!;
+
+    public SyntaxToken ToKeyword => new SyntaxToken(this, ((InternalSyntax.MutateStatementSyntax)this.Green).toKeyword, GetChildPosition(3), GetChildIndex(3));
+
+    public TypeSyntax Type => GetRed(ref this.type, 4)!;
+
+    public SyntaxToken SemicolonToken => new SyntaxToken(this, ((InternalSyntax.MutateStatementSyntax)this.Green).semicolonToken, GetChildPosition(5), GetChildIndex(5));
+
+    internal override SyntaxNode? GetNodeSlot(int index)
+        => index switch
+        {
+            0 => GetRedAtZero(ref this.attributeLists)!,
+            2 => GetRed(ref this.variableName, 2)!,
+            4 => GetRed(ref this.type, 4)!,
+            _ => null,
+        };
+
+    internal override SyntaxNode? GetCachedSlot(int index)
+        => index switch
+        {
+            0 => this.attributeLists,
+            2 => this.variableName,
+            4 => this.type,
+            _ => null,
+        };
+
+    public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitMutateStatement(this);
+    public override TResult? Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) where TResult : default => visitor.VisitMutateStatement(this);
+
+    public MutateStatementSyntax Update(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken mutateKeyword, IdentifierNameSyntax variableName, SyntaxToken toKeyword, TypeSyntax type, SyntaxToken semicolonToken)
+    {
+        if (attributeLists != this.AttributeLists || mutateKeyword != this.MutateKeyword || variableName != this.VariableName || toKeyword != this.ToKeyword || type != this.Type || semicolonToken != this.SemicolonToken)
+        {
+            var newNode = SyntaxFactory.MutateStatement(attributeLists, mutateKeyword, variableName, toKeyword, type, semicolonToken);
+            var annotations = GetAnnotations();
+            return annotations?.Length > 0 ? newNode.WithAnnotations(annotations) : newNode;
+        }
+
+        return this;
+    }
+
+    internal override StatementSyntax WithAttributeListsCore(SyntaxList<AttributeListSyntax> attributeLists) => WithAttributeLists(attributeLists);
+    public new MutateStatementSyntax WithAttributeLists(SyntaxList<AttributeListSyntax> attributeLists) => Update(attributeLists, this.MutateKeyword, this.VariableName, this.ToKeyword, this.Type, this.SemicolonToken);
+    public MutateStatementSyntax WithMutateKeyword(SyntaxToken mutateKeyword) => Update(this.AttributeLists, mutateKeyword, this.VariableName, this.ToKeyword, this.Type, this.SemicolonToken);
+    public MutateStatementSyntax WithVariableName(IdentifierNameSyntax variableName) => Update(this.AttributeLists, this.MutateKeyword, variableName, this.ToKeyword, this.Type, this.SemicolonToken);
+    public MutateStatementSyntax WithToKeyword(SyntaxToken toKeyword) => Update(this.AttributeLists, this.MutateKeyword, this.VariableName, toKeyword, this.Type, this.SemicolonToken);
+    public MutateStatementSyntax WithType(TypeSyntax type) => Update(this.AttributeLists, this.MutateKeyword, this.VariableName, this.ToKeyword, type, this.SemicolonToken);
+    public MutateStatementSyntax WithSemicolonToken(SyntaxToken semicolonToken) => Update(this.AttributeLists, this.MutateKeyword, this.VariableName, this.ToKeyword, this.Type, semicolonToken);
+
+    internal override StatementSyntax AddAttributeListsCore(params AttributeListSyntax[] items) => AddAttributeLists(items);
+    public new MutateStatementSyntax AddAttributeLists(params AttributeListSyntax[] items) => WithAttributeLists(this.AttributeLists.AddRange(items));
+}
+
+/// <remarks>
+/// <para>This node is associated with the following syntax kinds:</para>
+/// <list type="bullet">
 /// <item><description><see cref="SyntaxKind.ForStatement"/></description></item>
 /// </list>
 /// </remarks>

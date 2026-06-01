@@ -74,5 +74,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
         /// User variable declared by an inline expression declaration (<c>expr identifier</c>).
         /// </summary>
         InlineExpressionVariable,
+
+        /// <summary>
+        /// User variable declared by a <c>mutate</c> statement.
+        /// </summary>
+        MutationTarget,
     }
 }

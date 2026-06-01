@@ -180,6 +180,8 @@ namespace Microsoft.CodeAnalysis.Operations
                     return CreateBoundDoStatementOperation((BoundDoStatement)boundNode);
                 case BoundKind.DoUntilStatement:
                     return CreateBoundDoUntilStatementOperation((BoundDoUntilStatement)boundNode);
+                case BoundKind.MutateStatement:
+                    return CreateBoundMutateStatementOperation((BoundMutateStatement)boundNode);
                 case BoundKind.ForStatement:
                     return CreateBoundForStatementOperation((BoundForStatement)boundNode);
                 case BoundKind.ForEachStatement:
@@ -1963,6 +1965,14 @@ namespace Microsoft.CodeAnalysis.Operations
             SyntaxNode syntax = boundDoUntilStatement.Syntax;
             bool isImplicit = boundDoUntilStatement.WasCompilerGenerated;
             return new WhileLoopOperation(condition, conditionIsTop, conditionIsUntil, ignoredCondition: null, body, locals, continueLabel, exitLabel, _semanticModel, syntax, isImplicit);
+        }
+
+
+        private IOperation CreateBoundMutateStatementOperation(BoundMutateStatement boundMutateStatement)
+        {
+            // Represent the mutate statement as an expression statement containing the conversion
+            IOperation conversionOp = Create(boundMutateStatement.ConversionExpression);
+            return new NoneOperation(ImmutableArray.Create(conversionOp), _semanticModel, boundMutateStatement.Syntax, type: null, constantValue: null, isImplicit: true);
         }
 
         private IForLoopOperation CreateBoundForStatementOperation(BoundForStatement boundForStatement)

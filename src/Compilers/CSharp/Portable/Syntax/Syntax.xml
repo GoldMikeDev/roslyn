@@ -2584,6 +2584,21 @@
       <Kind Name="SemicolonToken"/>
     </Field>
   </Node>
+  <Node Name="MutateStatementSyntax" Base="StatementSyntax">
+    <Kind Name="MutateStatement"/>
+    <Field Name="AttributeLists" Type="SyntaxList&lt;AttributeListSyntax&gt;" Override="true"/>
+    <Field Name="MutateKeyword" Type="SyntaxToken">
+      <Kind Name="IdentifierToken"/>
+    </Field>
+    <Field Name="VariableName" Type="IdentifierNameSyntax"/>
+    <Field Name="ToKeyword" Type="SyntaxToken">
+      <Kind Name="ToKeyword"/>
+    </Field>
+    <Field Name="Type" Type="TypeSyntax"/>
+    <Field Name="SemicolonToken" Type="SyntaxToken">
+      <Kind Name="SemicolonToken"/>
+    </Field>
+  </Node>
   <Node Name="ForStatementSyntax" Base="StatementSyntax">
     <Kind Name="ForStatement"/>
     <Field Name="AttributeLists" Type="SyntaxList&lt;AttributeListSyntax&gt;" Override="true"/>

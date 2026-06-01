@@ -951,5 +951,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         DoUntilStatement = 9084,
         /// <summary>Represents an inline expression declaration <c>expr identifier</c>.</summary>
         InlineExpressionDeclaration = 9085,
+        /// <summary>Represents a <c>mutate</c> statement.</summary>
+        MutateStatement = 9086,
     }
 }

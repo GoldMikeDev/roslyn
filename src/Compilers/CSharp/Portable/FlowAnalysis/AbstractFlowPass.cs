@@ -3418,6 +3418,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             return null;
         }
 
+        public override BoundNode VisitMutateStatement(BoundMutateStatement node)
+        {
+            // Visit the conversion expression (reads the old local)
+            VisitRvalue(node.ConversionExpression);
+            // Assign the new local
+            Assign(node, node.NewLocal);
+            return null;
+        }
+
         public override BoundNode VisitDoUntilStatement(BoundDoUntilStatement node)
         {
             // do { statements; node.ContinueLabel: } until (node.Condition) node.BreakLabel:
