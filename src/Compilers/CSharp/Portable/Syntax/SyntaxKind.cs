@@ -949,5 +949,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         UntilKeyword = 9083,
         /// <summary>Represents a <c>do...until</c> statement.</summary>
         DoUntilStatement = 9084,
+        /// <summary>Represents an inline expression declaration <c>expr identifier</c>.</summary>
+        InlineExpressionDeclaration = 9085,
     }
 }

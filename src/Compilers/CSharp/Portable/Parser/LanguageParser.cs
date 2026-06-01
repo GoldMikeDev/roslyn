@@ -11568,6 +11568,14 @@ done:
             if (this.CurrentToken.Kind == SyntaxKind.QuestionToken && precedence <= Precedence.Conditional)
                 return consumeConditionalExpression(currentExpression);
 
+            // Check for trailing inline expression declaration: <expr> <identifier>
+            // where <identifier> is followed by a terminating token (comma, close-paren, etc.)
+            if (this.CurrentToken.Kind == SyntaxKind.IdentifierToken && IsInlineDeclarationContext())
+            {
+                var identToken = this.EatToken(SyntaxKind.IdentifierToken);
+                currentExpression = _syntaxFactory.InlineExpressionDeclaration(currentExpression, identToken);
+            }
+
             return currentExpression;
 
             ExpressionSyntax? tryExpandExpression(ExpressionSyntax leftOperand, Precedence precedence)
@@ -13456,6 +13464,21 @@ done:
         }
 
 #nullable enable
+
+        private bool IsInlineDeclarationContext()
+        {
+            // The token after the identifier must be a statement/expression terminator
+            // to avoid ambiguity with binary operators, member access, etc.
+            var after = this.PeekToken(1);
+            return after.Kind is
+                SyntaxKind.CommaToken or
+                SyntaxKind.CloseParenToken or
+                SyntaxKind.CloseBracketToken or
+                SyntaxKind.SemicolonToken or
+                SyntaxKind.CloseBraceToken or
+                SyntaxKind.ColonToken or
+                SyntaxKind.EndOfFileToken;
+        }
 
         private WithExpressionSyntax ParseWithExpression(ExpressionSyntax receiverExpression, SyntaxToken withKeyword)
         {

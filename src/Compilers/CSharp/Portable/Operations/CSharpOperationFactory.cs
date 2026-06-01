@@ -65,6 +65,8 @@ namespace Microsoft.CodeAnalysis.Operations
                     return CreateBoundObjectCreationExpressionOperation((BoundObjectCreationExpression)boundNode);
                 case BoundKind.WithExpression:
                     return CreateBoundWithExpressionOperation((BoundWithExpression)boundNode);
+                case BoundKind.InlineExpressionDeclaration:
+                    return CreateBoundInlineExpressionDeclarationOperation((BoundInlineExpressionDeclaration)boundNode);
                 case BoundKind.DynamicObjectCreationExpression:
                     return CreateBoundDynamicObjectCreationExpressionOperation((BoundDynamicObjectCreationExpression)boundNode);
                 case BoundKind.ObjectInitializerExpression:
@@ -759,6 +761,18 @@ namespace Microsoft.CodeAnalysis.Operations
             ITypeSymbol? type = boundWithExpression.GetPublicTypeSymbol();
             bool isImplicit = boundWithExpression.WasCompilerGenerated;
             return new WithOperation(operand, constructor.GetPublicSymbol(), initializer, _semanticModel, syntax, type, isImplicit);
+        }
+
+        private IOperation CreateBoundInlineExpressionDeclarationOperation(BoundInlineExpressionDeclaration node)
+        {
+            // Lower inline expression declaration to a simple assignment operation for the API surface
+            IOperation value = Create(node.Operand);
+            ILocalSymbol localSymbol = node.LocalSymbol.GetPublicSymbol();
+            SyntaxNode syntax = node.Syntax;
+            ITypeSymbol? type = node.GetPublicTypeSymbol();
+            bool isImplicit = node.WasCompilerGenerated;
+            ILocalReferenceOperation target = new LocalReferenceOperation(localSymbol, isDeclaration: true, _semanticModel, syntax, type, constantValue: null, isImplicit);
+            return new SimpleAssignmentOperation(isRef: false, target, value, _semanticModel, syntax, type, constantValue: default, isImplicit);
         }
 
         private IDynamicObjectCreationOperation CreateBoundDynamicObjectCreationExpressionOperation(BoundDynamicObjectCreationExpression boundDynamicObjectCreationExpression)

@@ -174,6 +174,9 @@ public partial class CSharpSyntaxVisitor<TResult>
     /// <summary>Called when the visitor visits a DeclarationExpressionSyntax node.</summary>
     public virtual TResult? VisitDeclarationExpression(DeclarationExpressionSyntax node) => this.DefaultVisit(node);
 
+    /// <summary>Called when the visitor visits a InlineExpressionDeclarationSyntax node.</summary>
+    public virtual TResult? VisitInlineExpressionDeclaration(InlineExpressionDeclarationSyntax node) => this.DefaultVisit(node);
+
     /// <summary>Called when the visitor visits a CastExpressionSyntax node.</summary>
     public virtual TResult? VisitCastExpression(CastExpressionSyntax node) => this.DefaultVisit(node);
 
@@ -923,6 +926,9 @@ public partial class CSharpSyntaxVisitor
     /// <summary>Called when the visitor visits a DeclarationExpressionSyntax node.</summary>
     public virtual void VisitDeclarationExpression(DeclarationExpressionSyntax node) => this.DefaultVisit(node);
 
+    /// <summary>Called when the visitor visits a InlineExpressionDeclarationSyntax node.</summary>
+    public virtual void VisitInlineExpressionDeclaration(InlineExpressionDeclarationSyntax node) => this.DefaultVisit(node);
+
     /// <summary>Called when the visitor visits a CastExpressionSyntax node.</summary>
     public virtual void VisitCastExpression(CastExpressionSyntax node) => this.DefaultVisit(node);
 
@@ -1671,6 +1677,9 @@ public partial class CSharpSyntaxRewriter : CSharpSyntaxVisitor<SyntaxNode?>
 
     public override SyntaxNode? VisitDeclarationExpression(DeclarationExpressionSyntax node)
         => node.Update((TypeSyntax?)Visit(node.Type) ?? throw new ArgumentNullException("type"), (VariableDesignationSyntax?)Visit(node.Designation) ?? throw new ArgumentNullException("designation"));
+
+    public override SyntaxNode? VisitInlineExpressionDeclaration(InlineExpressionDeclarationSyntax node)
+        => node.Update((ExpressionSyntax?)Visit(node.Expression) ?? throw new ArgumentNullException("expression"), VisitToken(node.Identifier));
 
     public override SyntaxNode? VisitCastExpression(CastExpressionSyntax node)
         => node.Update(VisitToken(node.OpenParenToken), (TypeSyntax?)Visit(node.Type) ?? throw new ArgumentNullException("type"), VisitToken(node.CloseParenToken), (ExpressionSyntax?)Visit(node.Expression) ?? throw new ArgumentNullException("expression"));
@@ -3208,6 +3217,14 @@ public static partial class SyntaxFactory
         if (type == null) throw new ArgumentNullException(nameof(type));
         if (designation == null) throw new ArgumentNullException(nameof(designation));
         return (DeclarationExpressionSyntax)Syntax.InternalSyntax.SyntaxFactory.DeclarationExpression((Syntax.InternalSyntax.TypeSyntax)type.Green, (Syntax.InternalSyntax.VariableDesignationSyntax)designation.Green).CreateRed();
+    }
+
+    /// <summary>Creates a new InlineExpressionDeclarationSyntax instance.</summary>
+    public static InlineExpressionDeclarationSyntax InlineExpressionDeclaration(ExpressionSyntax expression, SyntaxToken identifier)
+    {
+        if (expression == null) throw new ArgumentNullException(nameof(expression));
+        if (identifier.Kind() != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(identifier));
+        return (InlineExpressionDeclarationSyntax)Syntax.InternalSyntax.SyntaxFactory.InlineExpressionDeclaration((Syntax.InternalSyntax.ExpressionSyntax)expression.Green, (Syntax.InternalSyntax.SyntaxToken)identifier.Node!).CreateRed();
     }
 
     /// <summary>Creates a new CastExpressionSyntax instance.</summary>

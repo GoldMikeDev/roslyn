@@ -258,6 +258,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         ExpressionWithNullability,
         ValueForNullableAnalysis,
         WithExpression,
+        InlineExpressionDeclaration,
     }
 
     internal abstract partial class BoundInitializer : BoundNode
@@ -9117,6 +9118,37 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
     }
 
+    internal sealed partial class BoundInlineExpressionDeclaration : BoundExpression
+    {
+        public BoundInlineExpressionDeclaration(SyntaxNode syntax, LocalSymbol localSymbol, BoundExpression operand, TypeSymbol type, bool hasErrors = false)
+            : base(BoundKind.InlineExpressionDeclaration, syntax, type, hasErrors || operand.HasErrors())
+        {
+            RoslynDebug.Assert(localSymbol is object, "Field 'localSymbol' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(operand is object, "Field 'operand' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(type is object, "Field 'type' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            this.LocalSymbol = localSymbol;
+            this.Operand = operand;
+        }
+
+        public new TypeSymbol Type => base.Type!;
+        public LocalSymbol LocalSymbol { get; }
+        public BoundExpression Operand { get; }
+
+        [DebuggerStepThrough]
+        public override BoundNode? Accept(BoundTreeVisitor visitor) => visitor.VisitInlineExpressionDeclaration(this);
+
+        public BoundInlineExpressionDeclaration Update(LocalSymbol localSymbol, BoundExpression operand, TypeSymbol type)
+        {
+            if (!Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(localSymbol, this.LocalSymbol) || operand != this.Operand || !TypeSymbol.Equals(type, this.Type, TypeCompareKind.ConsiderEverything))
+            {
+                var result = new BoundInlineExpressionDeclaration(this.Syntax, localSymbol, operand, type, this.HasErrors);
+                result.CopyAttributes(this);
+                return result;
+            }
+            return this;
+        }
+    }
+
     internal abstract partial class BoundTreeVisitor<A, R>
     {
 
@@ -9601,6 +9633,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return VisitValueForNullableAnalysis((BoundValueForNullableAnalysis)node, arg);
                 case BoundKind.WithExpression:
                     return VisitWithExpression((BoundWithExpression)node, arg);
+                case BoundKind.InlineExpressionDeclaration:
+                    return VisitInlineExpressionDeclaration((BoundInlineExpressionDeclaration)node, arg);
             }
 
             return default(R)!;
@@ -9847,6 +9881,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual R VisitExpressionWithNullability(BoundExpressionWithNullability node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitValueForNullableAnalysis(BoundValueForNullableAnalysis node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitWithExpression(BoundWithExpression node, A arg) => this.DefaultVisit(node, arg);
+        public virtual R VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node, A arg) => this.DefaultVisit(node, arg);
     }
 
     internal abstract partial class BoundTreeVisitor
@@ -10089,6 +10124,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual BoundNode? VisitExpressionWithNullability(BoundExpressionWithNullability node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitValueForNullableAnalysis(BoundValueForNullableAnalysis node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitWithExpression(BoundWithExpression node) => this.DefaultVisit(node);
+        public virtual BoundNode? VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node) => this.DefaultVisit(node);
     }
 
     internal abstract partial class BoundTreeWalker : BoundTreeVisitor
@@ -11142,6 +11178,11 @@ namespace Microsoft.CodeAnalysis.CSharp
         {
             this.Visit(node.Receiver);
             this.Visit(node.InitializerExpression);
+            return null;
+        }
+        public override BoundNode? VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node)
+        {
+            this.Visit(node.Operand);
             return null;
         }
     }
@@ -12752,6 +12793,13 @@ namespace Microsoft.CodeAnalysis.CSharp
             BoundObjectInitializerExpressionBase initializerExpression = (BoundObjectInitializerExpressionBase)this.Visit(node.InitializerExpression);
             TypeSymbol? type = this.VisitType(node.Type);
             return node.Update(receiver, cloneMethod, initializerExpression, type);
+        }
+        public override BoundNode? VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node)
+        {
+            LocalSymbol localSymbol = this.VisitLocalSymbol(node.LocalSymbol);
+            BoundExpression operand = (BoundExpression)this.Visit(node.Operand);
+            TypeSymbol? type = this.VisitType(node.Type);
+            return node.Update(localSymbol, operand, type);
         }
     }
 
@@ -15525,6 +15573,24 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
             return updatedNode;
         }
+
+        public override BoundNode? VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node)
+        {
+            LocalSymbol localSymbol = GetUpdatedSymbol(node, node.LocalSymbol);
+            BoundExpression operand = (BoundExpression)this.Visit(node.Operand);
+            BoundInlineExpressionDeclaration updatedNode;
+
+            if (_updatedNullabilities.TryGetValue(node, out (NullabilityInfo Info, TypeSymbol? Type) infoAndType))
+            {
+                updatedNode = node.Update(localSymbol, operand, infoAndType.Type!);
+                updatedNode.TopLevelNullability = infoAndType.Info;
+            }
+            else
+            {
+                updatedNode = node.Update(localSymbol, operand, node.Type);
+            }
+            return updatedNode;
+        }
     }
 
     internal sealed class BoundTreeDumperNodeProducer : BoundTreeVisitor<object?, TreeDumperNode>
@@ -17753,6 +17819,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             new TreeDumperNode("receiver", null, new TreeDumperNode[] { Visit(node.Receiver, null) }),
             new TreeDumperNode("cloneMethod", node.CloneMethod, null),
             new TreeDumperNode("initializerExpression", null, new TreeDumperNode[] { Visit(node.InitializerExpression, null) }),
+            new TreeDumperNode("type", node.Type, null),
+            new TreeDumperNode("isSuppressed", node.IsSuppressed, null),
+            new TreeDumperNode("hasErrors", node.HasErrors, null)
+        }
+        );
+        public override TreeDumperNode VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node, object? arg) => new TreeDumperNode("inlineExpressionDeclaration", null, new TreeDumperNode[]
+        {
+            new TreeDumperNode("localSymbol", node.LocalSymbol, null),
+            new TreeDumperNode("operand", null, new TreeDumperNode[] { Visit(node.Operand, null) }),
             new TreeDumperNode("type", node.Type, null),
             new TreeDumperNode("isSuppressed", node.IsSuppressed, null),
             new TreeDumperNode("hasErrors", node.HasErrors, null)

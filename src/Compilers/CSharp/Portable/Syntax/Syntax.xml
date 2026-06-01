@@ -1335,6 +1335,13 @@
       <summary>Creates a DeclarationExpression node.</summary>
     </FactoryComment>
   </Node>
+  <Node Name="InlineExpressionDeclarationSyntax" Base="ExpressionSyntax">
+    <Kind Name="InlineExpressionDeclaration"/>
+    <Field Name="Expression" Type="ExpressionSyntax"/>
+    <Field Name="Identifier" Type="SyntaxToken">
+      <Kind Name="IdentifierToken"/>
+    </Field>
+  </Node>
   <Node Name="CastExpressionSyntax" Base="ExpressionSyntax">
     <Kind Name="CastExpression"/>
     <Field Name="OpenParenToken" Type="SyntaxToken">

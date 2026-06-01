@@ -3762,6 +3762,50 @@ public sealed partial class WithExpressionSyntax : ExpressionSyntax
     public WithExpressionSyntax AddInitializerExpressions(params ExpressionSyntax[] items) => WithInitializer(this.Initializer.WithExpressions(this.Initializer.Expressions.AddRange(items)));
 }
 
+/// <summary>Represents an inline expression declaration: <c>expr identifier</c>.</summary>
+/// <remarks>
+/// <para>This node is associated with the following syntax kinds:</para>
+/// <list type="bullet">
+/// <item><description><see cref="SyntaxKind.InlineExpressionDeclaration"/></description></item>
+/// </list>
+/// </remarks>
+public sealed partial class InlineExpressionDeclarationSyntax : ExpressionSyntax
+{
+    private ExpressionSyntax? _expression;
+
+    internal InlineExpressionDeclarationSyntax(InternalSyntax.CSharpSyntaxNode green, SyntaxNode? parent, int position)
+      : base(green, parent, position)
+    {
+    }
+
+    /// <summary>The expression whose value is assigned to the declared identifier.</summary>
+    public ExpressionSyntax Expression => GetRedAtZero(ref _expression)!;
+
+    /// <summary>The identifier of the declared local variable.</summary>
+    public SyntaxToken Identifier => new SyntaxToken(this, ((Syntax.InternalSyntax.InlineExpressionDeclarationSyntax)this.Green).identifier, GetChildPosition(1), GetChildIndex(1));
+
+    internal override SyntaxNode? GetNodeSlot(int index) => index == 0 ? GetRedAtZero(ref _expression)! : null;
+    internal override SyntaxNode? GetCachedSlot(int index) => index == 0 ? _expression : null;
+
+    public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitInlineExpressionDeclaration(this);
+    public override TResult? Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) where TResult : default => visitor.VisitInlineExpressionDeclaration(this);
+
+    public InlineExpressionDeclarationSyntax Update(ExpressionSyntax expression, SyntaxToken identifier)
+    {
+        if (expression != this.Expression || identifier != this.Identifier)
+        {
+            var newNode = SyntaxFactory.InlineExpressionDeclaration(expression, identifier);
+            var annotations = GetAnnotations();
+            return annotations?.Length > 0 ? newNode.WithAnnotations(annotations) : newNode;
+        }
+
+        return this;
+    }
+
+    public InlineExpressionDeclarationSyntax WithExpression(ExpressionSyntax expression) => Update(expression, this.Identifier);
+    public InlineExpressionDeclarationSyntax WithIdentifier(SyntaxToken identifier) => Update(this.Expression, identifier);
+}
+
 /// <remarks>
 /// <para>This node is associated with the following syntax kinds:</para>
 /// <list type="bullet">

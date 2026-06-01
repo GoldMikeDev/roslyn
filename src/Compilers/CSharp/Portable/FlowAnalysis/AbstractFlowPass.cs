@@ -2407,6 +2407,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             return null;
         }
 
+        public override BoundNode? VisitInlineExpressionDeclaration(BoundInlineExpressionDeclaration node)
+        {
+            VisitRvalue(node.Operand);
+            return null;
+        }
+
         public override BoundNode VisitArrayAccess(BoundArrayAccess node)
         {
             VisitRvalue(node.Expression);

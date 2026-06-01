@@ -5827,6 +5827,84 @@ internal sealed partial class WithExpressionSyntax : ExpressionSyntax
         => new WithExpressionSyntax(this.Kind, this.expression, this.withKeyword, this.initializer, GetDiagnostics(), annotations);
 }
 
+/// <summary>Represents an inline expression declaration: <c>expr identifier</c>.</summary>
+internal sealed partial class InlineExpressionDeclarationSyntax : ExpressionSyntax
+{
+    internal readonly ExpressionSyntax expression;
+    internal readonly SyntaxToken identifier;
+
+    internal InlineExpressionDeclarationSyntax(SyntaxKind kind, ExpressionSyntax expression, SyntaxToken identifier, DiagnosticInfo[]? diagnostics, SyntaxAnnotation[]? annotations)
+      : base(kind, diagnostics, annotations)
+    {
+        this.SlotCount = 2;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+    }
+
+    internal InlineExpressionDeclarationSyntax(SyntaxKind kind, ExpressionSyntax expression, SyntaxToken identifier, SyntaxFactoryContext context)
+      : base(kind)
+    {
+        this.SetFactoryContext(context);
+        this.SlotCount = 2;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+    }
+
+    internal InlineExpressionDeclarationSyntax(SyntaxKind kind, ExpressionSyntax expression, SyntaxToken identifier)
+      : base(kind)
+    {
+        this.SlotCount = 2;
+        this.AdjustFlagsAndWidth(expression);
+        this.expression = expression;
+        this.AdjustFlagsAndWidth(identifier);
+        this.identifier = identifier;
+    }
+
+    public ExpressionSyntax Expression => this.expression;
+    public SyntaxToken Identifier => this.identifier;
+
+    internal override GreenNode? GetSlot(int index)
+        => index switch
+        {
+            0 => this.expression,
+            1 => this.identifier,
+            _ => null,
+        };
+
+    internal override SyntaxNode CreateRed(SyntaxNode? parent, int position)
+        => new CSharp.Syntax.InlineExpressionDeclarationSyntax(this, parent, position);
+
+    public override void Accept(CSharpSyntaxVisitor visitor) => visitor.VisitInlineExpressionDeclaration(this);
+    public override TResult Accept<TResult>(CSharpSyntaxVisitor<TResult> visitor) => visitor.VisitInlineExpressionDeclaration(this);
+
+    public InlineExpressionDeclarationSyntax Update(ExpressionSyntax expression, SyntaxToken identifier)
+    {
+        if (expression != this.expression || identifier != this.identifier)
+        {
+            var newNode = SyntaxFactory.InlineExpressionDeclaration(expression, identifier);
+            var diags = GetDiagnostics();
+            if (diags?.Length > 0)
+                newNode = newNode.WithDiagnosticsGreen(diags);
+            var annotations = GetAnnotations();
+            if (annotations?.Length > 0)
+                newNode = newNode.WithAnnotationsGreen(annotations);
+            return newNode;
+        }
+
+        return this;
+    }
+
+    internal override GreenNode SetDiagnostics(DiagnosticInfo[]? diagnostics)
+        => new InlineExpressionDeclarationSyntax(this.Kind, this.expression, this.identifier, diagnostics, GetAnnotations());
+
+    internal override GreenNode SetAnnotations(SyntaxAnnotation[]? annotations)
+        => new InlineExpressionDeclarationSyntax(this.Kind, this.expression, this.identifier, GetDiagnostics(), annotations);
+}
+
 internal sealed partial class AnonymousObjectMemberDeclaratorSyntax : CSharpSyntaxNode
 {
     internal readonly NameEqualsSyntax? nameEquals;
@@ -27221,6 +27299,7 @@ internal partial class CSharpSyntaxVisitor<TResult>
     public virtual TResult VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node) => this.DefaultVisit(node);
     public virtual TResult VisitObjectCreationExpression(ObjectCreationExpressionSyntax node) => this.DefaultVisit(node);
     public virtual TResult VisitWithExpression(WithExpressionSyntax node) => this.DefaultVisit(node);
+    public virtual TResult VisitInlineExpressionDeclaration(InlineExpressionDeclarationSyntax node) => this.DefaultVisit(node);
     public virtual TResult VisitAnonymousObjectMemberDeclarator(AnonymousObjectMemberDeclaratorSyntax node) => this.DefaultVisit(node);
     public virtual TResult VisitAnonymousObjectCreationExpression(AnonymousObjectCreationExpressionSyntax node) => this.DefaultVisit(node);
     public virtual TResult VisitArrayCreationExpression(ArrayCreationExpressionSyntax node) => this.DefaultVisit(node);
@@ -27474,6 +27553,7 @@ internal partial class CSharpSyntaxVisitor
     public virtual void VisitImplicitObjectCreationExpression(ImplicitObjectCreationExpressionSyntax node) => this.DefaultVisit(node);
     public virtual void VisitObjectCreationExpression(ObjectCreationExpressionSyntax node) => this.DefaultVisit(node);
     public virtual void VisitWithExpression(WithExpressionSyntax node) => this.DefaultVisit(node);
+    public virtual void VisitInlineExpressionDeclaration(InlineExpressionDeclarationSyntax node) => this.DefaultVisit(node);
     public virtual void VisitAnonymousObjectMemberDeclarator(AnonymousObjectMemberDeclaratorSyntax node) => this.DefaultVisit(node);
     public virtual void VisitAnonymousObjectCreationExpression(AnonymousObjectCreationExpressionSyntax node) => this.DefaultVisit(node);
     public virtual void VisitArrayCreationExpression(ArrayCreationExpressionSyntax node) => this.DefaultVisit(node);
@@ -27850,6 +27930,13 @@ internal partial class CSharpSyntaxRewriter : CSharpSyntaxVisitor<CSharpSyntaxNo
 
     public override CSharpSyntaxNode VisitWithExpression(WithExpressionSyntax node)
         => node.Update((ExpressionSyntax)Visit(node.Expression), (SyntaxToken)Visit(node.WithKeyword), (InitializerExpressionSyntax)Visit(node.Initializer));
+
+    public override CSharpSyntaxNode VisitInlineExpressionDeclaration(InlineExpressionDeclarationSyntax node)
+    {
+        var expression = (ExpressionSyntax)Visit(node.expression);
+        var identifier = (SyntaxToken)Visit(node.identifier);
+        return node.Update(expression, identifier);
+    }
 
     public override CSharpSyntaxNode VisitAnonymousObjectMemberDeclarator(AnonymousObjectMemberDeclaratorSyntax node)
         => node.Update((NameEqualsSyntax)Visit(node.NameEquals), (ExpressionSyntax)Visit(node.Expression));
@@ -29848,6 +29935,27 @@ internal partial class ContextAwareSyntax
         if (cached != null) return (WithExpressionSyntax)cached;
 
         var result = new WithExpressionSyntax(SyntaxKind.WithExpression, expression, withKeyword, initializer, this.context);
+        if (hash >= 0)
+        {
+            SyntaxNodeCache.AddNode(result, hash);
+        }
+
+        return result;
+    }
+
+    public InlineExpressionDeclarationSyntax InlineExpressionDeclaration(ExpressionSyntax expression, SyntaxToken identifier)
+    {
+#if DEBUG
+        if (expression == null) throw new ArgumentNullException(nameof(expression));
+        if (identifier == null) throw new ArgumentNullException(nameof(identifier));
+        if (identifier.Kind != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(identifier));
+#endif
+
+        int hash;
+        var cached = CSharpSyntaxNodeCache.TryGetNode((int)SyntaxKind.InlineExpressionDeclaration, expression, identifier, this.context, out hash);
+        if (cached != null) return (InlineExpressionDeclarationSyntax)cached;
+
+        var result = new InlineExpressionDeclarationSyntax(SyntaxKind.InlineExpressionDeclaration, expression, identifier, this.context);
         if (hash >= 0)
         {
             SyntaxNodeCache.AddNode(result, hash);
@@ -35267,6 +35375,27 @@ internal static partial class SyntaxFactory
         if (cached != null) return (WithExpressionSyntax)cached;
 
         var result = new WithExpressionSyntax(SyntaxKind.WithExpression, expression, withKeyword, initializer);
+        if (hash >= 0)
+        {
+            SyntaxNodeCache.AddNode(result, hash);
+        }
+
+        return result;
+    }
+
+    public static InlineExpressionDeclarationSyntax InlineExpressionDeclaration(ExpressionSyntax expression, SyntaxToken identifier)
+    {
+#if DEBUG
+        if (expression == null) throw new ArgumentNullException(nameof(expression));
+        if (identifier == null) throw new ArgumentNullException(nameof(identifier));
+        if (identifier.Kind != SyntaxKind.IdentifierToken) throw new ArgumentException(nameof(identifier));
+#endif
+
+        int hash;
+        var cached = SyntaxNodeCache.TryGetNode((int)SyntaxKind.InlineExpressionDeclaration, expression, identifier, out hash);
+        if (cached != null) return (InlineExpressionDeclarationSyntax)cached;
+
+        var result = new InlineExpressionDeclarationSyntax(SyntaxKind.InlineExpressionDeclaration, expression, identifier);
         if (hash >= 0)
         {
             SyntaxNodeCache.AddNode(result, hash);
