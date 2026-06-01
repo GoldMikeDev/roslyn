@@ -8324,7 +8324,7 @@ done:
                     case SyntaxKind.UncheckedKeyword:
                         return this.ParseCheckedStatement(attributes);
                     case SyntaxKind.DoKeyword:
-                        return this.ParseDoStatement(attributes);
+                        return this.ParseDoOrDoUntilStatement(attributes);
                     case SyntaxKind.ForKeyword:
                         return this.ParseForOrForEachStatement(attributes);
                     case SyntaxKind.ForEachKeyword:
@@ -9516,11 +9516,17 @@ done:
                 this.ParsePossiblyAttributedBlock());
         }
 
-        private DoStatementSyntax ParseDoStatement(SyntaxList<AttributeListSyntax> attributes)
+        private StatementSyntax ParseDoOrDoUntilStatement(SyntaxList<AttributeListSyntax> attributes)
         {
             Debug.Assert(this.CurrentToken.Kind == SyntaxKind.DoKeyword);
             var @do = this.EatToken(SyntaxKind.DoKeyword);
             var statement = this.ParseEmbeddedStatement();
+
+            if (this.CurrentToken.ContextualKind == SyntaxKind.UntilKeyword)
+            {
+                return ParseDoUntilStatementRest(attributes, @do, statement);
+            }
+
             var @while = this.EatToken(SyntaxKind.WhileKeyword);
             var openParen = this.EatToken(SyntaxKind.OpenParenToken);
 
@@ -9534,6 +9540,27 @@ done:
                 @do,
                 statement,
                 @while,
+                openParen,
+                expression,
+                this.EatToken(SyntaxKind.CloseParenToken),
+                this.EatToken(SyntaxKind.SemicolonToken));
+        }
+
+        private DoUntilStatementSyntax ParseDoUntilStatementRest(SyntaxList<AttributeListSyntax> attributes, SyntaxToken @do, StatementSyntax statement)
+        {
+            var until = this.EatContextualToken(SyntaxKind.UntilKeyword);
+            var openParen = this.EatToken(SyntaxKind.OpenParenToken);
+
+            var saveTerm = _termState;
+            _termState |= TerminatorState.IsEndOfDoWhileExpression;
+            var expression = this.ParseExpressionForParenthesizedConstruct();
+            _termState = saveTerm;
+
+            return _syntaxFactory.DoUntilStatement(
+                attributes,
+                @do,
+                statement,
+                until,
                 openParen,
                 expression,
                 this.EatToken(SyntaxKind.CloseParenToken),

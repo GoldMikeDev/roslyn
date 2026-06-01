@@ -1242,6 +1242,9 @@
   <Node Name="BoundDoStatement" Base="BoundConditionalLoopStatement">
   </Node>
 
+  <Node Name="BoundDoUntilStatement" Base="BoundConditionalLoopStatement">
+  </Node>
+
   <Node Name="BoundWhileStatement" Base="BoundConditionalLoopStatement">
   </Node>
 

@@ -123,6 +123,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         SwitchDispatch,
         IfStatement,
         DoStatement,
+        DoUntilStatement,
         WhileStatement,
         ForStatement,
         ForEachStatement,
@@ -4012,6 +4013,36 @@ namespace Microsoft.CodeAnalysis.CSharp
             if (locals != this.Locals || condition != this.Condition || body != this.Body || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(breakLabel, this.BreakLabel) || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(continueLabel, this.ContinueLabel))
             {
                 var result = new BoundDoStatement(this.Syntax, locals, condition, body, breakLabel, continueLabel, this.HasErrors);
+                result.CopyAttributes(this);
+                return result;
+            }
+            return this;
+        }
+    }
+
+    internal sealed partial class BoundDoUntilStatement : BoundConditionalLoopStatement
+    {
+        public BoundDoUntilStatement(SyntaxNode syntax, ImmutableArray<LocalSymbol> locals, BoundExpression condition, BoundStatement body, LabelSymbol breakLabel, LabelSymbol continueLabel, bool hasErrors = false)
+            : base(BoundKind.DoUntilStatement, syntax, locals, condition, body, breakLabel, continueLabel, hasErrors || condition.HasErrors() || body.HasErrors())
+        {
+
+            RoslynDebug.Assert(!locals.IsDefault, "Field 'locals' cannot be null (use Null=\"allow\" in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(condition is object, "Field 'condition' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(body is object, "Field 'body' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(breakLabel is object, "Field 'breakLabel' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+            RoslynDebug.Assert(continueLabel is object, "Field 'continueLabel' cannot be null (make the type nullable in BoundNodes.xml to remove this check)");
+
+        }
+
+
+        [DebuggerStepThrough]
+        public override BoundNode? Accept(BoundTreeVisitor visitor) => visitor.VisitDoUntilStatement(this);
+
+        public BoundDoUntilStatement Update(ImmutableArray<LocalSymbol> locals, BoundExpression condition, BoundStatement body, LabelSymbol breakLabel, LabelSymbol continueLabel)
+        {
+            if (locals != this.Locals || condition != this.Condition || body != this.Body || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(breakLabel, this.BreakLabel) || !Symbols.SymbolEqualityComparer.ConsiderEverything.Equals(continueLabel, this.ContinueLabel))
+            {
+                var result = new BoundDoUntilStatement(this.Syntax, locals, condition, body, breakLabel, continueLabel, this.HasErrors);
                 result.CopyAttributes(this);
                 return result;
             }
@@ -9300,6 +9331,8 @@ namespace Microsoft.CodeAnalysis.CSharp
                     return VisitIfStatement((BoundIfStatement)node, arg);
                 case BoundKind.DoStatement:
                     return VisitDoStatement((BoundDoStatement)node, arg);
+                case BoundKind.DoUntilStatement:
+                    return VisitDoUntilStatement((BoundDoUntilStatement)node, arg);
                 case BoundKind.WhileStatement:
                     return VisitWhileStatement((BoundWhileStatement)node, arg);
                 case BoundKind.ForStatement:
@@ -9679,6 +9712,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual R VisitSwitchDispatch(BoundSwitchDispatch node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitIfStatement(BoundIfStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitDoStatement(BoundDoStatement node, A arg) => this.DefaultVisit(node, arg);
+        public virtual R VisitDoUntilStatement(BoundDoUntilStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitWhileStatement(BoundWhileStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitForStatement(BoundForStatement node, A arg) => this.DefaultVisit(node, arg);
         public virtual R VisitForEachStatement(BoundForEachStatement node, A arg) => this.DefaultVisit(node, arg);
@@ -9920,6 +9954,7 @@ namespace Microsoft.CodeAnalysis.CSharp
         public virtual BoundNode? VisitSwitchDispatch(BoundSwitchDispatch node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitIfStatement(BoundIfStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitDoStatement(BoundDoStatement node) => this.DefaultVisit(node);
+        public virtual BoundNode? VisitDoUntilStatement(BoundDoUntilStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitWhileStatement(BoundWhileStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitForStatement(BoundForStatement node) => this.DefaultVisit(node);
         public virtual BoundNode? VisitForEachStatement(BoundForEachStatement node) => this.DefaultVisit(node);
@@ -10442,6 +10477,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             return null;
         }
         public override BoundNode? VisitDoStatement(BoundDoStatement node)
+        {
+            this.Visit(node.Condition);
+            this.Visit(node.Body);
+            return null;
+        }
+        public override BoundNode? VisitDoUntilStatement(BoundDoUntilStatement node)
         {
             this.Visit(node.Condition);
             this.Visit(node.Body);
@@ -11743,6 +11784,15 @@ namespace Microsoft.CodeAnalysis.CSharp
             return node.Update(condition, consequence, alternativeOpt);
         }
         public override BoundNode? VisitDoStatement(BoundDoStatement node)
+        {
+            ImmutableArray<LocalSymbol> locals = this.VisitLocals(node.Locals);
+            LabelSymbol breakLabel = this.VisitLabelSymbol(node.BreakLabel);
+            LabelSymbol continueLabel = this.VisitLabelSymbol(node.ContinueLabel);
+            BoundExpression condition = (BoundExpression)this.Visit(node.Condition);
+            BoundStatement body = (BoundStatement)this.Visit(node.Body);
+            return node.Update(locals, condition, body, breakLabel, continueLabel);
+        }
+        public override BoundNode? VisitDoUntilStatement(BoundDoUntilStatement node)
         {
             ImmutableArray<LocalSymbol> locals = this.VisitLocals(node.Locals);
             LabelSymbol breakLabel = this.VisitLabelSymbol(node.BreakLabel);
@@ -13896,6 +13946,14 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         public override BoundNode? VisitDoStatement(BoundDoStatement node)
+        {
+            ImmutableArray<LocalSymbol> locals = GetUpdatedArray(node, node.Locals);
+            BoundExpression condition = (BoundExpression)this.Visit(node.Condition);
+            BoundStatement body = (BoundStatement)this.Visit(node.Body);
+            return node.Update(locals, condition, body, node.BreakLabel, node.ContinueLabel);
+        }
+
+        public override BoundNode? VisitDoUntilStatement(BoundDoUntilStatement node)
         {
             ImmutableArray<LocalSymbol> locals = GetUpdatedArray(node, node.Locals);
             BoundExpression condition = (BoundExpression)this.Visit(node.Condition);
@@ -16360,6 +16418,16 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
         );
         public override TreeDumperNode VisitDoStatement(BoundDoStatement node, object? arg) => new TreeDumperNode("doStatement", null, new TreeDumperNode[]
+        {
+            new TreeDumperNode("locals", node.Locals, null),
+            new TreeDumperNode("condition", null, new TreeDumperNode[] { Visit(node.Condition, null) }),
+            new TreeDumperNode("body", null, new TreeDumperNode[] { Visit(node.Body, null) }),
+            new TreeDumperNode("breakLabel", node.BreakLabel, null),
+            new TreeDumperNode("continueLabel", node.ContinueLabel, null),
+            new TreeDumperNode("hasErrors", node.HasErrors, null)
+        }
+        );
+        public override TreeDumperNode VisitDoUntilStatement(BoundDoUntilStatement node, object? arg) => new TreeDumperNode("doUntilStatement", null, new TreeDumperNode[]
         {
             new TreeDumperNode("locals", node.Locals, null),
             new TreeDumperNode("condition", null, new TreeDumperNode[] { Visit(node.Condition, null) }),

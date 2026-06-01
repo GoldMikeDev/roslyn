@@ -591,6 +591,16 @@ namespace Microsoft.CodeAnalysis.CSharp
             VisitPossibleEmbeddedStatement(node.Statement, whileBinder);
         }
 
+        public override void VisitDoUntilStatement(DoUntilStatementSyntax node)
+        {
+            Debug.Assert((object)_containingMemberOrLambda == _enclosing.ContainingMemberOrLambda);
+            var whileBinder = new WhileBinder(_enclosing, node);
+            AddToMap(node, whileBinder);
+
+            Visit(node.Condition, whileBinder);
+            VisitPossibleEmbeddedStatement(node.Statement, whileBinder);
+        }
+
         public override void VisitForStatement(ForStatementSyntax node)
         {
             Debug.Assert((object)_containingMemberOrLambda == _enclosing.ContainingMemberOrLambda);

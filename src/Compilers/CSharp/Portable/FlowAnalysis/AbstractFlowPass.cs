@@ -3412,6 +3412,21 @@ namespace Microsoft.CodeAnalysis.CSharp
             return null;
         }
 
+        public override BoundNode VisitDoUntilStatement(BoundDoUntilStatement node)
+        {
+            // do { statements; node.ContinueLabel: } until (node.Condition) node.BreakLabel:
+            // Exits when condition is true; equivalent to do-while with negated condition.
+            LoopHead(node);
+            VisitStatement(node.Body);
+            ResolveContinues(node.ContinueLabel);
+            VisitCondition(node.Condition);
+            TLocalState breakState = this.StateWhenTrue;
+            SetState(this.StateWhenFalse);
+            LoopTail(node);
+            ResolveBreaks(breakState, node.BreakLabel);
+            return null;
+        }
+
         public override BoundNode VisitGotoStatement(BoundGotoStatement node)
         {
             Debug.Assert(!this.IsConditionalState);

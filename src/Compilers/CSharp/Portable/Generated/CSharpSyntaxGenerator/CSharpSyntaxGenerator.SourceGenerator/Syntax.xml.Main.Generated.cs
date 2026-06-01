@@ -402,6 +402,7 @@ public partial class CSharpSyntaxVisitor<TResult>
 
     /// <summary>Called when the visitor visits a DoStatementSyntax node.</summary>
     public virtual TResult? VisitDoStatement(DoStatementSyntax node) => this.DefaultVisit(node);
+    public virtual TResult? VisitDoUntilStatement(DoUntilStatementSyntax node) => this.DefaultVisit(node);
 
     /// <summary>Called when the visitor visits a ForStatementSyntax node.</summary>
     public virtual TResult? VisitForStatement(ForStatementSyntax node) => this.DefaultVisit(node);
@@ -1150,6 +1151,7 @@ public partial class CSharpSyntaxVisitor
 
     /// <summary>Called when the visitor visits a DoStatementSyntax node.</summary>
     public virtual void VisitDoStatement(DoStatementSyntax node) => this.DefaultVisit(node);
+    public virtual void VisitDoUntilStatement(DoUntilStatementSyntax node) => this.DefaultVisit(node);
 
     /// <summary>Called when the visitor visits a ForStatementSyntax node.</summary>
     public virtual void VisitForStatement(ForStatementSyntax node) => this.DefaultVisit(node);
@@ -1898,6 +1900,9 @@ public partial class CSharpSyntaxRewriter : CSharpSyntaxVisitor<SyntaxNode?>
 
     public override SyntaxNode? VisitDoStatement(DoStatementSyntax node)
         => node.Update(VisitList(node.AttributeLists), VisitToken(node.DoKeyword), (StatementSyntax?)Visit(node.Statement) ?? throw new ArgumentNullException("statement"), VisitToken(node.WhileKeyword), VisitToken(node.OpenParenToken), (ExpressionSyntax?)Visit(node.Condition) ?? throw new ArgumentNullException("condition"), VisitToken(node.CloseParenToken), VisitToken(node.SemicolonToken));
+
+    public override SyntaxNode? VisitDoUntilStatement(DoUntilStatementSyntax node)
+        => node.Update(VisitList(node.AttributeLists), VisitToken(node.DoKeyword), (StatementSyntax?)Visit(node.Statement) ?? throw new ArgumentNullException("statement"), VisitToken(node.UntilKeyword), VisitToken(node.OpenParenToken), (ExpressionSyntax?)Visit(node.Condition) ?? throw new ArgumentNullException("condition"), VisitToken(node.CloseParenToken), VisitToken(node.SemicolonToken));
 
     public override SyntaxNode? VisitForStatement(ForStatementSyntax node)
         => node.Update(VisitList(node.AttributeLists), VisitToken(node.ForKeyword), VisitToken(node.OpenParenToken), (VariableDeclarationSyntax?)Visit(node.Declaration), VisitList(node.Initializers), VisitToken(node.FirstSemicolonToken), (ExpressionSyntax?)Visit(node.Condition), VisitToken(node.SecondSemicolonToken), VisitList(node.Incrementors), VisitToken(node.CloseParenToken), (StatementSyntax?)Visit(node.Statement) ?? throw new ArgumentNullException("statement"));
@@ -4351,6 +4356,27 @@ public static partial class SyntaxFactory
     /// <summary>Creates a new DoStatementSyntax instance.</summary>
     public static DoStatementSyntax DoStatement(StatementSyntax statement, ExpressionSyntax condition)
         => SyntaxFactory.DoStatement(default, SyntaxFactory.Token(SyntaxKind.DoKeyword), statement, SyntaxFactory.Token(SyntaxKind.WhileKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), condition, SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
+    /// <summary>Creates a new DoUntilStatementSyntax instance.</summary>
+    public static DoUntilStatementSyntax DoUntilStatement(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken doKeyword, StatementSyntax statement, SyntaxToken untilKeyword, SyntaxToken openParenToken, ExpressionSyntax condition, SyntaxToken closeParenToken, SyntaxToken semicolonToken)
+    {
+        if (doKeyword.Kind() != SyntaxKind.DoKeyword) throw new ArgumentException(nameof(doKeyword));
+        if (statement == null) throw new ArgumentNullException(nameof(statement));
+        if (untilKeyword.Kind() != SyntaxKind.UntilKeyword) throw new ArgumentException(nameof(untilKeyword));
+        if (openParenToken.Kind() != SyntaxKind.OpenParenToken) throw new ArgumentException(nameof(openParenToken));
+        if (condition == null) throw new ArgumentNullException(nameof(condition));
+        if (closeParenToken.Kind() != SyntaxKind.CloseParenToken) throw new ArgumentException(nameof(closeParenToken));
+        if (semicolonToken.Kind() != SyntaxKind.SemicolonToken) throw new ArgumentException(nameof(semicolonToken));
+        return (DoUntilStatementSyntax)Syntax.InternalSyntax.SyntaxFactory.DoUntilStatement(attributeLists.Node.ToGreenList<Syntax.InternalSyntax.AttributeListSyntax>(), (Syntax.InternalSyntax.SyntaxToken)doKeyword.Node!, (Syntax.InternalSyntax.StatementSyntax)statement.Green, (Syntax.InternalSyntax.SyntaxToken)untilKeyword.Node!, (Syntax.InternalSyntax.SyntaxToken)openParenToken.Node!, (Syntax.InternalSyntax.ExpressionSyntax)condition.Green, (Syntax.InternalSyntax.SyntaxToken)closeParenToken.Node!, (Syntax.InternalSyntax.SyntaxToken)semicolonToken.Node!).CreateRed();
+    }
+
+    /// <summary>Creates a new DoUntilStatementSyntax instance.</summary>
+    public static DoUntilStatementSyntax DoUntilStatement(SyntaxList<AttributeListSyntax> attributeLists, StatementSyntax statement, ExpressionSyntax condition)
+        => SyntaxFactory.DoUntilStatement(attributeLists, SyntaxFactory.Token(SyntaxKind.DoKeyword), statement, SyntaxFactory.Token(SyntaxKind.UntilKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), condition, SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
+    /// <summary>Creates a new DoUntilStatementSyntax instance.</summary>
+    public static DoUntilStatementSyntax DoUntilStatement(StatementSyntax statement, ExpressionSyntax condition)
+        => SyntaxFactory.DoUntilStatement(default, SyntaxFactory.Token(SyntaxKind.DoKeyword), statement, SyntaxFactory.Token(SyntaxKind.UntilKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), condition, SyntaxFactory.Token(SyntaxKind.CloseParenToken), SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
     /// <summary>Creates a new ForStatementSyntax instance.</summary>
     public static ForStatementSyntax ForStatement(SyntaxList<AttributeListSyntax> attributeLists, SyntaxToken forKeyword, SyntaxToken openParenToken, VariableDeclarationSyntax? declaration, SeparatedSyntaxList<ExpressionSyntax> initializers, SyntaxToken firstSemicolonToken, ExpressionSyntax? condition, SyntaxToken secondSemicolonToken, SeparatedSyntaxList<ExpressionSyntax> incrementors, SyntaxToken closeParenToken, StatementSyntax statement)

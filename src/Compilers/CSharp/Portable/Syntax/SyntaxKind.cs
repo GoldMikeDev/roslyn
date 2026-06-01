@@ -944,5 +944,10 @@ namespace Microsoft.CodeAnalysis.CSharp
 
         [Experimental("RSEXPERIMENTAL006", UrlFormat = "https://github.com/dotnet/roslyn/issues/82567")]
         UnionDeclaration = 9082,
+
+        /// <summary>Represents <see langword="until"/>.</summary>
+        UntilKeyword = 9083,
+        /// <summary>Represents a <c>do...until</c> statement.</summary>
+        DoUntilStatement = 9084,
     }
 }

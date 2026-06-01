@@ -3557,6 +3557,12 @@ namespace Microsoft.CodeAnalysis.CSharp
             return base.VisitDoStatement(node);
         }
 
+        public override BoundNode? VisitDoUntilStatement(BoundDoUntilStatement node)
+        {
+            DeclareLocals(node.Locals);
+            return base.VisitDoUntilStatement(node);
+        }
+
         public override BoundNode? VisitWhileStatement(BoundWhileStatement node)
         {
             DeclareLocals(node.Locals);

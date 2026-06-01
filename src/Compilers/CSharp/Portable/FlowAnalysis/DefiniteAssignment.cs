@@ -2203,6 +2203,14 @@ namespace Microsoft.CodeAnalysis.CSharp
             return result;
         }
 
+        public override BoundNode VisitDoUntilStatement(BoundDoUntilStatement node)
+        {
+            DeclareVariables(node.Locals);
+            var result = base.VisitDoUntilStatement(node);
+            ReportUnusedVariables(node.Locals);
+            return result;
+        }
+
         public override BoundNode VisitWhileStatement(BoundWhileStatement node)
         {
             DeclareVariables(node.Locals);

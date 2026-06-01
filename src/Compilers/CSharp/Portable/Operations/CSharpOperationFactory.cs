@@ -176,6 +176,8 @@ namespace Microsoft.CodeAnalysis.Operations
                     return CreateBoundWhileStatementOperation((BoundWhileStatement)boundNode);
                 case BoundKind.DoStatement:
                     return CreateBoundDoStatementOperation((BoundDoStatement)boundNode);
+                case BoundKind.DoUntilStatement:
+                    return CreateBoundDoUntilStatementOperation((BoundDoUntilStatement)boundNode);
                 case BoundKind.ForStatement:
                     return CreateBoundForStatementOperation((BoundForStatement)boundNode);
                 case BoundKind.ForEachStatement:
@@ -1932,6 +1934,20 @@ namespace Microsoft.CodeAnalysis.Operations
             ImmutableArray<ILocalSymbol> locals = boundDoStatement.Locals.GetPublicSymbols();
             SyntaxNode syntax = boundDoStatement.Syntax;
             bool isImplicit = boundDoStatement.WasCompilerGenerated;
+            return new WhileLoopOperation(condition, conditionIsTop, conditionIsUntil, ignoredCondition: null, body, locals, continueLabel, exitLabel, _semanticModel, syntax, isImplicit);
+        }
+
+        private IWhileLoopOperation CreateBoundDoUntilStatementOperation(BoundDoUntilStatement boundDoUntilStatement)
+        {
+            IOperation condition = Create(boundDoUntilStatement.Condition);
+            IOperation body = Create(boundDoUntilStatement.Body);
+            ILabelSymbol continueLabel = boundDoUntilStatement.ContinueLabel.GetPublicSymbol();
+            ILabelSymbol exitLabel = boundDoUntilStatement.BreakLabel.GetPublicSymbol();
+            bool conditionIsTop = false;
+            bool conditionIsUntil = true;
+            ImmutableArray<ILocalSymbol> locals = boundDoUntilStatement.Locals.GetPublicSymbols();
+            SyntaxNode syntax = boundDoUntilStatement.Syntax;
+            bool isImplicit = boundDoUntilStatement.WasCompilerGenerated;
             return new WhileLoopOperation(condition, conditionIsTop, conditionIsUntil, ignoredCondition: null, body, locals, continueLabel, exitLabel, _semanticModel, syntax, isImplicit);
         }
 
