@@ -73,3 +73,4 @@ override Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax.
 static Microsoft.CodeAnalysis.CSharp.SyntaxFactory.InlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.ExpressionSyntax! expression, Microsoft.CodeAnalysis.SyntaxToken identifier) -> Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax!
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor.VisitInlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax! node) -> void
 virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitInlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax! node) -> TResult?
+virtual Microsoft.CodeAnalysis.CSharp.CSharpSyntaxVisitor<TResult>.VisitInlineExpressionDeclaration(Microsoft.CodeAnalysis.CSharp.Syntax.InlineExpressionDeclarationSyntax! node) -> TResult?
